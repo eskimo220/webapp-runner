@@ -1,5 +1,6 @@
 package webapp.runner.launch;
 
+import org.apache.naming.ResourceRef;
 import org.redisson.Redisson;
 import org.redisson.codec.FstCodec;
 import org.redisson.config.Config;
@@ -19,9 +20,10 @@ public class JndiRedissonFactory implements ObjectFactory {
     public Object getObjectInstance(Object obj, Name name, Context nameCtx, Hashtable<?, ?> environment) throws Exception {
 
         System.out.println("------------------------->JndiRedissonFactory.getObjectInstance");
+        System.out.println("obj = " + obj);
 
         try {
-            return buildClient();
+            return buildClient(obj);
         } catch (Exception e) {
             NamingException ex = new NamingException();
             ex.initCause(e);
@@ -29,7 +31,9 @@ public class JndiRedissonFactory implements ObjectFactory {
         }
     }
 
-    private Object buildClient() {
+    private Object buildClient(Object obj) {
+
+        ResourceRef resourceRef = (ResourceRef) obj;
 
         String redisUriString;
         if (System.getenv("REDIS_URL") == null && System.getenv("REDISTOGO_URL") == null && System.getenv("REDISCLOUD_URL") == null) {
@@ -57,10 +61,10 @@ public class JndiRedissonFactory implements ObjectFactory {
             Config config = new Config();
             SingleServerConfig serverConfig = config.useSingleServer()
                     .setAddress(redisUriWithoutAuth.toString())
-//                    .setConnectionPoolSize(commandLineParams.sessionStorePoolSize)
-//                    .setConnectionMinimumIdleSize(commandLineParams.sessionStorePoolSize)
-//                    .setTimeout(commandLineParams.sessionStoreOperationTimout)
-                    ;
+                    .setConnectionPoolSize(Integer.valueOf((String) resourceRef.get("sessionStorePoolSize").getContent()))
+                    .setConnectionMinimumIdleSize(Integer.valueOf((String) resourceRef.get("sessionStorePoolSize").getContent()))
+                    .setTimeout(Integer.valueOf((String) resourceRef.get("sessionStoreOperationTimout").getContent()));
+
             config.setCodec(new FstCodec());
 
             if (redisUri.getUserInfo() != null) {

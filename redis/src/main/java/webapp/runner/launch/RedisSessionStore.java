@@ -16,7 +16,7 @@ public class RedisSessionStore extends SessionStore {
     public void configureSessionStore(CommandLineParams commandLineParams, Context ctx) {
         System.out.println("★★★★★★★★Using redis session store: org.redisson.tomcat.RedissonSessionManager");
 
-        register(ctx);
+        register(commandLineParams, ctx);
 
         JndiRedissonSessionManager jndiRedissonSessionManager = new JndiRedissonSessionManager();
         jndiRedissonSessionManager.setJndiName("bean/redisson");
@@ -24,10 +24,13 @@ public class RedisSessionStore extends SessionStore {
         ctx.setManager(jndiRedissonSessionManager);
     }
 
-    private void register(Context ctx) {
+    private void register(CommandLineParams commandLineParams, Context ctx) {
         ContextResource resource = new ContextResource();
         resource.setName("bean/redisson");
         resource.setProperty("factory", "webapp.runner.launch.JndiRedissonFactory");
+        resource.setProperty("sessionStorePoolSize", commandLineParams.sessionStorePoolSize.toString());
+        resource.setProperty("sessionStorePoolSize", commandLineParams.sessionStorePoolSize.toString());
+        resource.setProperty("sessionStoreOperationTimout", commandLineParams.sessionStoreOperationTimout.toString());
         resource.setAuth("Container");
         resource.setCloseMethod("shutdown");
         ctx.getNamingResources().addResource(resource);
